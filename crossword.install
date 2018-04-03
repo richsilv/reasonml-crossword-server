@@ -1,0 +1,27 @@
+lib: [
+  "_build/install/default/lib/crossword/META" {"META"}
+  "_build/install/default/lib/crossword/opam" {"opam"}
+  "_build/install/default/lib/crossword/crossword.cmi" {"crossword.cmi"}
+  "_build/install/default/lib/crossword/crossword.cmx" {"crossword.cmx"}
+  "_build/install/default/lib/crossword/crossword.cmt" {"crossword.cmt"}
+  "_build/install/default/lib/crossword/crossword.ml-gen" {"crossword.ml-gen"}
+  "_build/install/default/lib/crossword/crossword__CrosswordMaker.cmi" {"crossword__CrosswordMaker.cmi"}
+  "_build/install/default/lib/crossword/crossword__CrosswordMaker.cmx" {"crossword__CrosswordMaker.cmx"}
+  "_build/install/default/lib/crossword/crossword__CrosswordMaker.cmt" {"crossword__CrosswordMaker.cmt"}
+  "_build/install/default/lib/crossword/CrosswordMaker.re" {"CrosswordMaker.re"}
+  "_build/install/default/lib/crossword/crossword__WordDict.cmi" {"crossword__WordDict.cmi"}
+  "_build/install/default/lib/crossword/crossword__WordDict.cmx" {"crossword__WordDict.cmx"}
+  "_build/install/default/lib/crossword/crossword__WordDict.cmt" {"crossword__WordDict.cmt"}
+  "_build/install/default/lib/crossword/WordDict.re" {"WordDict.re"}
+  "_build/install/default/lib/crossword/crossword.cma" {"crossword.cma"}
+  "_build/install/default/lib/crossword/crossword.cmxa" {"crossword.cmxa"}
+  "_build/install/default/lib/crossword/crossword.a" {"crossword.a"}
+  "_build/install/default/lib/crossword/crossword.cmxs" {"crossword.cmxs"}
+  "_build/install/default/lib/crossword/crossword.dune" {"crossword.dune"}
+]
+bin: [
+  "_build/install/default/bin/Hello" {"Hello"}
+]
+doc: [
+  "_build/install/default/doc/crossword/README.md"
+]
