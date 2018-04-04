@@ -37,6 +37,7 @@ type completedWord = {
   crossIndex: int,
   length: int,
   value: string,
+  breaks: list(int)
 };
 
 let getRandomWord = (size: int) : partialWord => {
@@ -142,6 +143,8 @@ let makeGrid = (size: int) => {
       grid := updateGrid(thisWord, grid^);
     };
   };
+
+  (words^, grid^);
 };
 
 type letterConstraint = {
@@ -214,49 +217,64 @@ let calcConstraints = (wordShape: partialWord, fittedWords: list(completedWord))
   }, []);
 };
 
-/* function fitWords(wordShape, dict) {
-  const partialSolutions = [{ fittedWords: [], reject: [], timesFitted: 0 }];
-  let currentWordInd = 0;
-  let latestSolution = partialSolutions[currentWordInd];
+type partialSolution = {
+  fittedWords: list(completedWord),
+  reject: list(string),
+  timesFitted: int
+};
 
-  while (currentWordInd < wordShape.length) {
-    console.log(`Fit ${currentWordInd} words so far.`);
-    const thisWordShape = wordShape[currentWordInd];
-    const { fittedWords, reject, timesFitted } = latestSolution;
-    const constraints = calcConstraints(thisWordShape, fittedWords);
-    const nextWord = findWordWithConstraints(
-      dict,
-      thisWordShape.length,
-      constraints,
-      reject
-    );
-    if (nextWord && timesFitted < MAX_TIMES_FITTED) {
-      latestSolution.timesFitted += 1;
-      latestSolution = {
-        fittedWords: latestSolution.fittedWords.concat(
-          Object.assign({}, thisWordShape, { value: nextWord })
-        ),
+let maxTimesFitted = 10;
+
+let fitWords = (wordShapes: list(partialWord), dict: WordDict.t): list(completedWord) => {
+  let currentWordInd = ref(0);
+  let latestSolution = ref({ fittedWords: [], reject: [], timesFitted: 0 });
+  let partialSolutions = ref([latestSolution^]);
+  let targetLength = List.length(wordShapes);
+
+  while (currentWordInd^ < targetLength) {
+    print_int(currentWordInd^);
+    let thisWordShape = List.nth(wordShapes, currentWordInd^);
+    let { fittedWords, reject, timesFitted } = latestSolution^;
+    let theseConstraints = calcConstraints(thisWordShape, fittedWords);
+    let nextWord = findWordWithConstraints(dict, thisWordShape.length, theseConstraints, reject);
+    switch (nextWord) {
+    | Some(word) when timesFitted < maxTimesFitted => {
+      let newWord = {
+        value: word.word,
+        breaks: word.breaks,
+        dir: thisWordShape.dir,
+        col: thisWordShape.col,
+        row: thisWordShape.row,
+        start: thisWordShape.start,
+        crossIndex: thisWordShape.crossIndex,
+        length: thisWordShape.length
+      };
+      latestSolution := {
+        fittedWords: [newWord, ...fittedWords],
         reject: [],
         timesFitted: 0
       };
-      partialSolutions.push(latestSolution);
-      currentWordInd += 1;
-    } else {
-      if (timesFitted >= MAX_TIMES_FITTED)
-        console.log(`Rejecting due to failure after ${timesFitted} failures.`);
-      const rejectWord = fittedWords.slice(-1)[0];
-      if (!rejectWord) {
-        throw new Error('No solution can be found');
-      }
-      partialSolutions.pop();
-      currentWordInd -= 1;
-      latestSolution = partialSolutions[currentWordInd];
-      latestSolution.reject.push(rejectWord.value);
+      partialSolutions := [latestSolution^, { fittedWords, reject, timesFitted: timesFitted + 1 }, ...List.tl(partialSolutions^)];
+      currentWordInd := currentWordInd^ + 1;
     }
-  }
-
-  return latestSolution.fittedWords;
-} */
+    | _ => {
+      if (timesFitted >= maxTimesFitted) {
+        print_string("Rejecting due to failure");
+      };
+      let rejectWord = List.hd(fittedWords);
+      currentWordInd := currentWordInd^ - 1;
+      switch (partialSolutions^) {
+      | [_, tempSolution, ...tailSolutions] => {
+        latestSolution := { ...tempSolution, reject: [rejectWord.value, ...tempSolution.reject] };
+        partialSolutions := [latestSolution^, ...tailSolutions];
+      }
+      | _ => failwith("Cannot fit words.");
+      }
+    }
+    };
+  };
+  latestSolution^.fittedWords;
+};
 
 type readerInput =
   | Filename(string)
@@ -269,13 +287,21 @@ let rec findStringMatches = (~find: Str.regexp, ~input: string, ~matches: list(i
   };
 };
 
-let parseLine = (line: string): WordDict.entry => {
-  let breaks = findStringMatches(~find=Str.regexp("_"), ~input=line, ());
-  let length = String.length(line);
+let parseWord = (word: string): WordDict.entry => {
+  let breaks = findStringMatches(~find=Str.regexp("_"), ~input=word, ());
+  let length = String.length(word);
   {
-    word: line,
+    word: word,
     breaks: breaks,
     length: length
+  };
+};
+
+let parseLine = (line: string): option(WordDict.entry) => {
+  switch(Str.split(Str.regexp("[\t]+"), line)) {
+  | [word] => Some(parseWord(word))
+  | [word, count] => Some(parseWord(word))
+  | _ => None
   };
 };
 
@@ -299,7 +325,12 @@ let rec readWordList = (filename: readerInput): list(WordDict.entry) => {
 
     while (! break^) {
       switch(input_line(chan)) {
-      | line => wordList := [parseLine(line), ...wordList^]
+      | line => {
+        switch (parseLine(line)) {
+        | Some(newWord) => wordList := [newWord, ...wordList^]
+        | None => ()
+        };
+      }
       | exception End_of_file => break := true
       };
     };
